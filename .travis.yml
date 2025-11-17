@@ -1,0 +1,25 @@
+language: php
+
+php:
+  - '8.3'
+
+before_install: 
+  - echo "Memulai build Travis CI..."
+
+script: 
+  - echo "Menjalankan tes..."
+  - php -l index.php
+
+before_deploy: 
+  - echo "Mempersiapkan untuk deploy..."
+  - openssl aes-256-cbc -K $encrypted_YOUR_KEY_HERE_key -iv $encrypted_YOUR_KEY_HERE_iv -in deploy_key.enc -out deploy_key -d
+  - chmod 600 deploy_key
+  - eval "$(ssh-agent -s)"
+  - ssh-add deploy_key
+  - echo "Kunci SSH Siap."
+
+deploy:
+  provider: script
+  script: echo "Memulai proses rsync ke server..." && rsync -avz -e "ssh -o StrictHostKeyChecking=no -i deploy_key" ./index.php $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH && echo "Deployment selesai."
+  on:
+    branch: main
